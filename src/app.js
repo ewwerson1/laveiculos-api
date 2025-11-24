@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 // IMPORTS
 const path = require('path');
 const uploadRoutes = require('./routes/upload'); 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 100000;
 const router = require('./router/router');
 
 // Middlewares
@@ -18,8 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuração CORS
 app.use(cors({
-  origin: 'http://lalocacaodeveiculos.com.br', // seu domínio do frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // métodos permitidos
+  origin: '*', // seu domínio do frontend
+  methods: '*', // métodos permitidos
   credentials: true // se quiser enviar cookies ou tokens de sessão
 }));
 
