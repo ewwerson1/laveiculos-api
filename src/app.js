@@ -18,9 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuração CORS
 app.use(cors({
-    origin: '*',
-    methods: '*',
-    allowedHeaders: 'Content-Type,Authorization'
+  origin: 'http://lalocacaodeveiculos.com.br', // seu domínio do frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // métodos permitidos
+  credentials: true // se quiser enviar cookies ou tokens de sessão
 }));
 
 // Tornar a pasta public acessível (IMPORTANTE!)
