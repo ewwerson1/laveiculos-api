@@ -1,11 +1,27 @@
 const express = require("express");
 const router = express.Router();
-const cors = require("cors");
 
 // ---------------- CONTROLLERS ----------------
 const { loginAdmin } = require("../controllers/authController");
 const { loginInvestidor } = require("../controllers/investidorController");
-// ... demais imports
+const {
+  atualizarMeuPerfil,
+  listarInvestidores,
+  listarPorId,
+  criarInvestidor,
+  atualizarInvestidor,
+  excluirInvestidor,
+  adicionarCarro,
+  atualizarCarro,
+  excluirCarro
+} = require("../controllers/investidorController");
+
+const { listarClientes, listarClientePorId, criarCliente, atualizarCliente, excluirCliente } = require("../controllers/clientController");
+const { listarCarros, listarMeusCarros } = require("../controllers/carrosController");
+const { criarAluguel, listarAlugueis, listarAlugueisPorCarro, atualizarAluguel, updateKilometragem } = require("../controllers/rentController");
+const { criarDespesa, listarDespesas, resumoFinanceiro } = require("../controllers/expenseController");
+const { updateMaintenanceStatus, addMaintenanceCost } = require("../controllers/maintenanceController");
+const { enviarCodigoAlterarSenha, validarCodigoAlterarSenha, alterarSenhaInvestidor } = require("../controllers/investidorSenha");
 
 // ---------------- MIDDLEWARE ----------------
 const auth = require("../middleware/authMiddleware");
@@ -13,27 +29,19 @@ const auth = require("../middleware/authMiddleware");
 // ---------------- MODELS ----------------
 const Investidor = require("../models/Investor");
 
-// Configuração CORS apenas para o frontend
-const corsOptions = {
-  origin: 'https://lalocacaodeveiculos.com.br', // seu frontend
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  credentials: true
-};
+// ---------- ROTAS PÚBLICAS ----------
+router.post("/login/admin", loginAdmin);
+router.post("/login/investidor", loginInvestidor);
 
-// ---------- ROTAS PÚBLICAS (com CORS) ----------
-router.post("/login/admin", cors(corsOptions), loginAdmin);
-router.post("/login/investidor", cors(corsOptions), loginInvestidor);
-
-router.post("/investidor/enviar-codigo", cors(corsOptions), auth, enviarCodigoAlterarSenha);
-router.post("/investidor/validar-codigo", cors(corsOptions), auth, validarCodigoAlterarSenha);
-router.post("/investidor/alterar-senha", cors(corsOptions), auth, alterarSenhaInvestidor);
+router.post("/investidor/enviar-codigo", auth, enviarCodigoAlterarSenha);
+router.post("/investidor/validar-codigo", auth, validarCodigoAlterarSenha);
+router.post("/investidor/alterar-senha", auth, alterarSenhaInvestidor);
 
 // ---------- ROTAS PROTEGIDAS (após auth) ----------
-// Se quiser, pode aplicar cors global aqui também
 router.use(auth);
 
 // PERFIL DO INVESTIDOR
-router.get("/investidor/me", cors(corsOptions), async (req, res) => {
+router.get("/investidor/me", async (req, res) => {
   try {
     const investidor = await Investidor.findById(req.user.id).populate("carros");
     if (!investidor) return res.status(404).json({ error: "Investidor não encontrado" });
@@ -42,43 +50,43 @@ router.get("/investidor/me", cors(corsOptions), async (req, res) => {
     res.status(500).json({ error: "Erro ao carregar perfil" });
   }
 });
-router.put("/investidor/perfil", cors(corsOptions), atualizarMeuPerfil);
+router.put("/investidor/perfil", atualizarMeuPerfil);
 
 // CLIENTES
-router.get("/clientes", cors(corsOptions), listarClientes);
-router.get("/cliente/:id", cors(corsOptions), listarClientePorId);
-router.post("/clientes", cors(corsOptions), criarCliente);
-router.put("/cliente/:id", cors(corsOptions), atualizarCliente);
-router.delete("/cliente/:id", cors(corsOptions), excluirCliente);
+router.get("/clientes", listarClientes);
+router.get("/cliente/:id", listarClientePorId);
+router.post("/clientes", criarCliente);
+router.put("/cliente/:id", atualizarCliente);
+router.delete("/cliente/:id", excluirCliente);
 
 // INVESTIDORES (ADMIN)
-router.get("/investidores", cors(corsOptions), listarInvestidores);
-router.get("/investidor/:id", cors(corsOptions), listarPorId);
-router.post("/investidores", cors(corsOptions), criarInvestidor);
-router.put("/investidor/:id", cors(corsOptions), atualizarInvestidor);
-router.delete("/investidor/:id", cors(corsOptions), excluirInvestidor);
+router.get("/investidores", listarInvestidores);
+router.get("/investidor/:id", listarPorId);
+router.post("/investidores", criarInvestidor);
+router.put("/investidor/:id", atualizarInvestidor);
+router.delete("/investidor/:id", excluirInvestidor);
 
 // CARROS
-router.post("/carro/:investidorId", cors(corsOptions), adicionarCarro);
-router.put("/carro/:carroId", cors(corsOptions), atualizarCarro);
-router.delete("/carro/:carroId", cors(corsOptions), excluirCarro);
-router.get("/carros", cors(corsOptions), listarCarros);
-router.get("/carros/meus", cors(corsOptions), listarMeusCarros);
+router.post("/carro/:investidorId", adicionarCarro);
+router.put("/carro/:carroId", atualizarCarro);
+router.delete("/carro/:carroId", excluirCarro);
+router.get("/carros", listarCarros);
+router.get("/carros/meus", listarMeusCarros);
 
 // ALUGUEIS
-router.post("/alugueis", cors(corsOptions), criarAluguel);
-router.get("/alugueis", cors(corsOptions), listarAlugueis);
-router.get("/alugueis/carro/:carroId", cors(corsOptions), listarAlugueisPorCarro);
-router.put("/alugueis/:id", cors(corsOptions), atualizarAluguel);
-router.put("/alugueis/:id/kilometragem", cors(corsOptions), updateKilometragem);
+router.post("/alugueis", criarAluguel);
+router.get("/alugueis", listarAlugueis);
+router.get("/alugueis/carro/:carroId", listarAlugueisPorCarro);
+router.put("/alugueis/:id", atualizarAluguel);
+router.put("/alugueis/:id/kilometragem", updateKilometragem);
 
 // DESPESAS
-router.post("/despesas", cors(corsOptions), criarDespesa);
-router.get("/despesas", cors(corsOptions), listarDespesas);
-router.get("/financeiro/resumo", cors(corsOptions), resumoFinanceiro);
+router.post("/despesas", criarDespesa);
+router.get("/despesas", listarDespesas);
+router.get("/financeiro/resumo", resumoFinanceiro);
 
 // MANUTENÇÃO
-router.put("/carro/:id/manutencao/status", cors(corsOptions), updateMaintenanceStatus);
-router.post("/carro/:id/manutencao/gasto", cors(corsOptions), addMaintenanceCost);
+router.put("/carro/:id/manutencao/status", updateMaintenanceStatus);
+router.post("/carro/:id/manutencao/gasto", addMaintenanceCost);
 
 module.exports = router;
