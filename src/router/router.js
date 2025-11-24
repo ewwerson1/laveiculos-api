@@ -16,6 +16,19 @@ const {
   excluirCarro
 } = require("../controllers/investidorController");
 
+router.get("/alugueis/ativo/:carroId", async (req, res) => {
+  const { carroId } = req.params;
+  try {
+    const aluguelAtivo = await Aluguel.findOne({ carro: carroId, ativo: true });
+    if (!aluguelAtivo) return res.status(404).json({ error: "Nenhum aluguel ativo encontrado" });
+    res.json(aluguelAtivo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar aluguel ativo" });
+  }
+});
+
+
 const { listarClientes, listarClientePorId, criarCliente, atualizarCliente, excluirCliente } = require("../controllers/clientController");
 const { listarCarros, listarMeusCarros } = require("../controllers/carrosController");
 const { criarAluguel, listarAlugueis, listarAlugueisPorCarro, atualizarAluguel, updateKilometragem } = require("../controllers/rentController");
