@@ -28,6 +28,7 @@ const auth = require("../middleware/authMiddleware");
 
 // ---------------- MODELS ----------------
 const Investidor = require("../models/Investor");
+const Aluguel = require("../models/Rent"); // ajuste conforme o nome real do seu modelo
 
 // ---------- ROTAS PÚBLICAS ----------
 router.post("/login/admin", loginAdmin);
@@ -79,6 +80,19 @@ router.get("/alugueis", listarAlugueis);
 router.get("/alugueis/carro/:carroId", listarAlugueisPorCarro);
 router.put("/alugueis/:id", atualizarAluguel);
 router.put("/alugueis/:id/kilometragem", updateKilometragem);
+
+// NOVA ROTA: ALUGUEL ATIVO DE UM CARRO
+router.get("/alugueis/ativo/:carroId", async (req, res) => {
+  const { carroId } = req.params;
+  try {
+    const aluguelAtivo = await Aluguel.findOne({ carro: carroId, ativo: true });
+    if (!aluguelAtivo) return res.status(404).json({ error: "Nenhum aluguel ativo encontrado" });
+    res.json(aluguelAtivo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar aluguel ativo" });
+  }
+});
 
 // DESPESAS
 router.post("/despesas", criarDespesa);
