@@ -24,6 +24,11 @@ const { criarDespesa, listarDespesas, resumoFinanceiro } = require("../controlle
 const { updateMaintenanceStatus, addMaintenanceCost } = require("../controllers/maintenanceController");
 const { enviarCodigoAlterarSenha, validarCodigoAlterarSenha, alterarSenhaInvestidor } = require("../controllers/investidorSenha");
 
+const { getAluguelAtivoPorStatus } = require("../controllers/rentController");
+
+// Substituir a rota antiga:
+router.get("/alugueis/ativo/:carroId", getAluguelAtivoPorStatus);
+
 // ---------------- MIDDLEWARE ----------------
 const auth = require("../middleware/authMiddleware");
 
