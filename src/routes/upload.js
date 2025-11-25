@@ -31,7 +31,7 @@ router.post('/api/upload/carro/:carId/foto', upload.single('foto'), async (req, 
     }
 
     // 3. Monta o URL público do arquivo
-    const fotoUrl = `https://laveiculos-api-1.onrender.com/uploads/${filename}`; 
+    const fotoUrl = `/uploads/${filename}`; 
 
     // 4. ATUALIZA O CAMPO 'FOTO' NO MONGODB
     car.foto = fotoUrl;
