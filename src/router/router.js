@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 
 // ---------------- CONTROLLERS ----------------
 const { loginAdmin } = require("../controllers/authController");
@@ -15,19 +16,6 @@ const {
   atualizarCarro,
   excluirCarro
 } = require("../controllers/investidorController");
-
-router.get("/alugueis/ativo/:carroId", async (req, res) => {
-  const { carroId } = req.params;
-  try {
-    const aluguelAtivo = await Aluguel.findOne({ carro: carroId, ativo: true });
-    if (!aluguelAtivo) return res.status(404).json({ error: "Nenhum aluguel ativo encontrado" });
-    res.json(aluguelAtivo);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar aluguel ativo" });
-  }
-});
-
 
 const { listarClientes, listarClientePorId, criarCliente, atualizarCliente, excluirCliente } = require("../controllers/clientController");
 const { listarCarros, listarMeusCarros } = require("../controllers/carrosController");
@@ -94,12 +82,22 @@ router.get("/alugueis/carro/:carroId", listarAlugueisPorCarro);
 router.put("/alugueis/:id", atualizarAluguel);
 router.put("/alugueis/:id/kilometragem", updateKilometragem);
 
-// NOVA ROTA: ALUGUEL ATIVO DE UM CARRO
+// ---------- ROTA CORRIGIDA: ALUGUEL ATIVO DE UM CARRO ----------
 router.get("/alugueis/ativo/:carroId", async (req, res) => {
   const { carroId } = req.params;
+
+  // Valida se o ID é um ObjectId válido
+  if (!mongoose.Types.ObjectId.isValid(carroId)) {
+    return res.status(400).json({ error: "ID do carro inválido" });
+  }
+
   try {
-    const aluguelAtivo = await Aluguel.findOne({ carro: carroId, ativo: true });
-    if (!aluguelAtivo) return res.status(404).json({ error: "Nenhum aluguel ativo encontrado" });
+    const aluguelAtivo = await Aluguel.findOne({ carro: mongoose.Types.ObjectId(carroId), ativo: true });
+
+    if (!aluguelAtivo) {
+      return res.status(404).json({ error: "Nenhum aluguel ativo encontrado para este carro" });
+    }
+
     res.json(aluguelAtivo);
   } catch (err) {
     console.error(err);
