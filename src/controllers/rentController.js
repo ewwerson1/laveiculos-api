@@ -85,39 +85,7 @@ exports.atualizarAluguel = async (req, res) => {
     console.error("ERRO atualizarAluguel:", error);
     res.status(500).json({ error: error.message });
   }
-};
-
-exports.getAluguelAtivoPorStatus = async (req, res) => {
-  try {
-    const { carroId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(carroId)) {
-      return res.status(400).json({ error: "ID do Carro inválido." });
-    }
-
-    // Buscar carro
-    const carro = await Car.findById(carroId);
-    if (!carro) return res.status(404).json({ error: "Carro não encontrado." });
-
-    // Verificar status do carro
-    if (carro.status !== "Alugado") {
-      return res.status(404).json({ error: "Carro não está alugado no momento." });
-    }
-
-    // Buscar aluguel ativo associado ao carro
-    const aluguel = await Rent.findOne({ carroId: carro._id })
-      .sort({ inicio: -1 })
-      .populate("investor", "nome email")
-      .populate("carroId", "modelo placa marca");
-
-    if (!aluguel) return res.status(404).json({ error: "Nenhum aluguel encontrado para este carro." });
-
-    res.json(aluguel);
-  } catch (error) {
-    console.error("ERRO getAluguelAtivoPorStatus:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
+}
 
 // Atualização de quilometragem
 exports.updateKilometragem = async (req, res) => {

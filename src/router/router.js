@@ -24,17 +24,11 @@ const { criarDespesa, listarDespesas, resumoFinanceiro } = require("../controlle
 const { updateMaintenanceStatus, addMaintenanceCost } = require("../controllers/maintenanceController");
 const { enviarCodigoAlterarSenha, validarCodigoAlterarSenha, alterarSenhaInvestidor } = require("../controllers/investidorSenha");
 
-const { getAluguelAtivoPorStatus } = require("../controllers/rentController");
-
-// Substituir a rota antiga:
-router.get("/alugueis/ativo/:carroId", getAluguelAtivoPorStatus);
-
 // ---------------- MIDDLEWARE ----------------
 const auth = require("../middleware/authMiddleware");
 
 // ---------------- MODELS ----------------
 const Investidor = require("../models/Investor");
-const Aluguel = require("../models/Rent"); // ajuste conforme o nome real do seu modelo
 
 // ---------- ROTAS PÚBLICAS ----------
 router.post("/login/admin", loginAdmin);
@@ -83,34 +77,11 @@ router.get("/carros/meus", listarMeusCarros);
 // ALUGUEIS
 router.post("/alugueis", criarAluguel);
 router.get("/alugueis", listarAlugueis);
-router.get("/alugueis/carro/:carroId", listarAlugueisPorCarro);
+router.get("/alugueis/carro/:carroId", listarAlugueisPorCarro); // ✅ usando a função do controller
 router.put("/alugueis/:id", atualizarAluguel);
 router.put("/alugueis/:id/kilometragem", updateKilometragem);
 
-// ---------- ROTA CORRIGIDA: ALUGUEL ATIVO DE UM CARRO ----------
-router.get("/alugueis/ativo/:carroId", async (req, res) => {
-  const { carroId } = req.params;
-
-  // Valida se o ID é um ObjectId válido
-  if (!mongoose.Types.ObjectId.isValid(carroId)) {
-    return res.status(400).json({ error: "ID do carro inválido" });
-  }
-
-  try {
-    const aluguelAtivo = await Aluguel.findOne({ carro: mongoose.Types.ObjectId(carroId), ativo: true });
-
-    if (!aluguelAtivo) {
-      return res.status(404).json({ error: "Nenhum aluguel ativo encontrado para este carro" });
-    }
-
-    res.json(aluguelAtivo);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar aluguel ativo" });
-  }
-});
-
-// DESPESAS
+// ---------- DESPESAS ----------
 router.post("/despesas", criarDespesa);
 router.get("/despesas", listarDespesas);
 router.get("/financeiro/resumo", resumoFinanceiro);
