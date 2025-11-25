@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 // ---------------- CONTROLLERS ----------------
 const { loginAdmin } = require("../controllers/authController");
-const { loginInvestidor } = require("../controllers/investidorController");
+const { loginInvestidor } = require("../controllers/authController");
 const {
   atualizarMeuPerfil,
   listarInvestidores,
@@ -42,6 +42,7 @@ router.post("/investidor/alterar-senha", auth, alterarSenhaInvestidor);
 router.use(auth);
 
 // PERFIL DO INVESTIDOR
+// PERFIL DO INVESTIDOR
 router.get("/investidor/me", async (req, res) => {
   try {
     const investidor = await Investidor.findById(req.user.id).populate("carros");
@@ -51,6 +52,7 @@ router.get("/investidor/me", async (req, res) => {
     res.status(500).json({ error: "Erro ao carregar perfil" });
   }
 });
+
 router.put("/investidor/perfil", atualizarMeuPerfil);
 
 // CLIENTES

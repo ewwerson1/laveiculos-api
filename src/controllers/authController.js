@@ -25,33 +25,37 @@ exports.loginAdmin = (req, res) => {
 };
 
 // LOGIN INVESTIDOR
+// LOGIN INVESTIDOR
 exports.loginInvestidor = async (req, res) => {
   try {
     const { email, senha } = req.body;
 
     const investidor = await Investidor.findOne({ email });
     if (!investidor) {
-      return res.status(404).json({ error: "Investidor não encontrado." });
+      return res.status(404).json({ erro: "Investidor não encontrado" });
     }
 
     const senhaCorreta = await bcrypt.compare(senha, investidor.senha);
     if (!senhaCorreta) {
-      return res.status(401).json({ error: "Senha incorreta." });
+      return res.status(401).json({ erro: "Senha incorreta" });
     }
 
     const token = jwt.sign(
       { id: investidor._id, role: "investidor" },
-      process.env.JWT_SECRET || "SEGREDO_SUPER_SEGURO_123",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    res.json({
-      message: "Login realizado com sucesso",
+    return res.json({
+      message: "Login investidor realizado",
       token,
+      role: "investidor",
       investidor
     });
+
   } catch (err) {
     console.error("Erro login investidor:", err);
-    res.status(500).json({ error: "Erro ao realizar login" });
+    return res.status(500).json({ erro: "Erro ao realizar login" });
   }
 };
+
