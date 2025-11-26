@@ -130,22 +130,24 @@ exports.criarInvestidor = async (req, res) => {
   }
 };
 
-
 // ATUALIZAR INVESTIDOR
 exports.atualizarInvestidor = async (req, res) => {
   try {
-    // Se estiver atualizando senha → fazer hash corretamente
-    if (req.body.senha) {
-      const investidor = await Investidor.findById(req.params.id);
-      investidor.senha = req.body.senha;
-      await investidor.save();
+    const data = { ...req.body };
 
-      return res.json(await Investidor.findById(req.params.id).populate("carros"));
+    // Caso senha venha vazia → remove
+    if (!data.senha || data.senha.trim() === "") {
+      delete data.senha;
+    }
+
+    // Caso senha exista → criptografar
+    if (data.senha) {
+      data.senha = await bcrypt.hash(data.senha, 10);
     }
 
     const atualizado = await Investidor.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      data,
       { new: true }
     ).populate("carros");
 
