@@ -28,8 +28,6 @@ const RentalHistorySchema = new mongoose.Schema({
     carroId: { type: mongoose.Schema.Types.ObjectId, ref: 'Car' },
     modelo: { type: String },
     placa: { type: String },
-    ano: {typee: Number},
-    valorInvestimento: {type: Number},
     // O ID ou nome do investidor no momento do aluguel
     investor: { type: mongoose.Schema.Types.ObjectId, ref: 'Investor' },
     
@@ -69,6 +67,9 @@ const CarSchema = new mongoose.Schema(
             type: String, 
             required: true 
         },
+        ano: {typee: Number},
+        
+        valorInvestimento: {type: Number},
         
         // 🖼️ NOVO CAMPO: URL da foto (armazenado pelo Multer)
         foto: { 
