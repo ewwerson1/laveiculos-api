@@ -9,8 +9,7 @@ const InvestorSchema = new mongoose.Schema({
   endereco: String,
   foto: String,
   status: { type: String, default: "Ativo" },
-
-  // senha SEM default direto
+  pix: String,
   senha: { type: String, required: true },
 
   carros: [

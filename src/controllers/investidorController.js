@@ -111,7 +111,7 @@ exports.criarInvestidor = async (req, res) => {
           faturamento: c.faturamento || 0,
           gastoManutencao: c.gastoManutencao || 0,
           status: c.status || "Disponivel",
-          investor: novoInvestidor._id
+          investor: novoInvestidor._id, 
         });
 
         carrosCriados.push(novoCarro._id);
