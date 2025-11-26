@@ -67,8 +67,8 @@ const CarSchema = new mongoose.Schema(
             type: String, 
             required: true 
         },
-        ano: {typee: Number},
-        
+        ano: {type: Number},
+
         valorInvestimento: {type: Number},
         
         // 🖼️ NOVO CAMPO: URL da foto (armazenado pelo Multer)
