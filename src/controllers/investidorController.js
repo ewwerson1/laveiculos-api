@@ -190,7 +190,7 @@ exports.excluirInvestidor = async (req, res) => {
 exports.adicionarCarro = async (req, res) => {
   try {
     const { investidorId } = req.params;
-    const { modelo, placa, cor, valorAluguel, porcentagem } = req.body;
+    const { modelo, placa, cor, valorAluguel, porcentagem, ano, valorInvestimento } = req.body;
 
     const inv = await Investidor.findById(investidorId);
     if (!inv) return res.status(404).json({ error: "Investidor não encontrado." });
@@ -204,7 +204,9 @@ exports.adicionarCarro = async (req, res) => {
       faturamento: 0,
       gastoManutencao: 0,
       status: "Disponível",
-      investor: investidorId
+      investor: investidorId,
+      ano,
+      valorInvestimento
     });
 
     inv.carros.push(novoCarro._id);
