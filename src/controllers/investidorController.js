@@ -233,38 +233,28 @@ exports.atualizarCarro = async (req, res) => {
       return res.status(404).json({ error: "Carro não encontrado" });
     }
 
+    // Campos que realmente existem no seu Car.js
     const camposPermitidos = [
       "modelo",
       "placa",
       "cor",
+      "ano",
+      "foto",
+      "valorInvestimento",
       "valorAluguel",
       "porcentagem",
+      "investor",
       "faturamento",
       "gastoManutencao",
-      "status",
-      "rentalDays",
-      "rentalStart",
-      "rentalEnd",
-      "investor",
+      "status"
     ];
 
+    // Atualizar apenas campos válidos
     camposPermitidos.forEach(campo => {
       if (data[campo] !== undefined) {
         carro[campo] = data[campo];
       }
     });
-
-    if (data.status) {
-      if (data.status === "Alugado") {
-        if (data.rentalStart) carro.rentalStart = new Date(data.rentalStart);
-        if (data.rentalEnd) carro.rentalEnd = new Date(data.rentalEnd);
-        if (data.rentalDays) carro.rentalDays = Number(data.rentalDays);
-      } else {
-        carro.rentalStart = null;
-        carro.rentalEnd = null;
-        carro.rentalDays = 0;
-      }
-    }
 
     await carro.save();
 
@@ -275,7 +265,6 @@ exports.atualizarCarro = async (req, res) => {
     res.status(500).json({ error: "Erro ao atualizar carro", details: e.message });
   }
 };
-
 
 // EXCLUIR CARRO
 exports.excluirCarro = async (req, res) => {
