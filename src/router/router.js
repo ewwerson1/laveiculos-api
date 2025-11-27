@@ -6,35 +6,35 @@ const mongoose = require("mongoose");
 const { loginAdmin, loginInvestidor } = require("../controllers/authController");
 
 const {
-  atualizarMeuPerfil,
-  listarInvestidores,
-  listarPorId,
-  criarInvestidor,
-  atualizarInvestidor,
-  excluirInvestidor,
-  adicionarCarro,
-  atualizarCarro,
-  excluirCarro
+  atualizarMeuPerfil,
+  listarInvestidores,
+  listarPorId,
+  criarInvestidor,
+  atualizarInvestidor,
+  excluirInvestidor,
+  adicionarCarro,
+  atualizarCarro: atualizarCarroInvestidor, // <-- CORREÇÃO: Usando um alias para evitar conflito
+  excluirCarro
 } = require("../controllers/investidorController");
 
 const { 
-  listarClientes, 
-  listarClientePorId, 
-  criarCliente, 
-  atualizarCliente, 
-  excluirCliente,
-  adicionarAluguelAoCliente,
-  adicionarManutencaoAoCliente
+  listarClientes, 
+  listarClientePorId, 
+  criarCliente, 
+  atualizarCliente, 
+  excluirCliente,
+  adicionarAluguelAoCliente,
+  adicionarManutencaoAoCliente
 } = require("../controllers/clientController");
 
 const { listarCarros, listarMeusCarros } = require("../controllers/carrosController");
 
 const { 
-  criarAluguel, 
-  listarAlugueis, 
-  listarAlugueisPorCarro, 
-  atualizarAluguel, 
-  updateKilometragem 
+  criarAluguel, 
+  listarAlugueis, 
+  listarAlugueisPorCarro, 
+  atualizarAluguel, 
+  updateKilometragem 
 } = require("../controllers/rentController");
 
 // CUSTOS / FINANCEIRO
@@ -42,16 +42,16 @@ const { createCost, listCosts, financeSummary } = require("../controllers/costCo
 
 // MANUTENÇÃO
 const { 
-  entrarEmManutencao, 
-  finalizarManutencao, 
-  addMaintenanceCost 
+  entrarEmManutencao, 
+  finalizarManutencao, 
+  addMaintenanceCost 
 } = require("../controllers/maintenanceController");
 
 // SENHA INVESTIDOR
 const { 
-  enviarCodigoAlterarSenha, 
-  validarCodigoAlterarSenha, 
-  alterarSenhaInvestidor 
+  enviarCodigoAlterarSenha, 
+  validarCodigoAlterarSenha, 
+  alterarSenhaInvestidor 
 } = require("../controllers/investidorSenha");
 
 // ---------------- MIDDLEWARE ----------------
@@ -79,13 +79,13 @@ router.use(auth);
 
 // PERFIL DO INVESTIDOR
 router.get("/investidor/me", async (req, res) => {
-  try {
-    const investidor = await Investidor.findById(req.user.id).populate("carros");
-    if (!investidor) return res.status(404).json({ error: "Investidor não encontrado" });
-    res.json(investidor);
-  } catch (err) {
-    res.status(500).json({ error: "Erro ao carregar perfil" });
-  }
+  try {
+    const investidor = await Investidor.findById(req.user.id).populate("carros");
+    if (!investidor) return res.status(404).json({ error: "Investidor não encontrado" });
+    res.json(investidor);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao carregar perfil" });
+  }
 });
 
 router.put("/investidor/perfil", atualizarMeuPerfil);
@@ -113,7 +113,7 @@ router.delete("/investidor/:id", excluirInvestidor);
 
 // CARROS
 router.post("/carro/:investidorId", adicionarCarro);
-router.put("/carro/:carroId", atualizarCarro);
+router.put("/carro/:carroId", atualizarCarroInvestidor); // <-- USANDO O ALIAS CORRIGIDO
 router.delete("/carro/:carroId", excluirCarro);
 
 router.get("/carros", listarCarros);
