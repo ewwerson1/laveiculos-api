@@ -26,7 +26,7 @@ exports.listarClientePorId = async (req, res) => {
 // Criar novo cliente
 exports.criarCliente = async (req, res) => {
   try {
-    const { nome, email, telefone, cpf } = req.body;
+    const { nome, email, telefone, cpf, validadeCnh } = req.body;
     const cliente = new Client({ nome, email, telefone, cpf, validadeCnh });
     await cliente.save();
     res.status(201).json(cliente);
