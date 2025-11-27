@@ -3,31 +3,25 @@
 const mongoose = require('mongoose');
 
 // --- Sub-esquemas ---
+
+// 1. Manutencao
 const ManutencaoSchema = new mongoose.Schema({
+    // Data/hora em que o carro entrou na manutenção
     entrada: { 
         type: Date, 
         required: true 
     },
+    // Data/hora em que o carro saiu da manutenção
     saida: { 
         type: Date, 
         default: null 
     },
+    // Gasto total desta manutenção
     gasto: { 
         type: Number, 
         default: 0 
-    },
-
-    gastoLocadora: { 
-        type: Number, 
-        default: 0 
-    },
-    gastoCliente: { 
-        type: Number, 
-        default: 0 
     }
-
-}, { _id: false });
-
+}, { _id: false }); // Não é necessário um _id para sub-documentos
 
 // 2. Aluguel (Histórico)
 const RentalHistorySchema = new mongoose.Schema({
