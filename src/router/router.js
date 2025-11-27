@@ -17,15 +17,30 @@ const {
   excluirCarro
 } = require("../controllers/investidorController");
 
-const { listarClientes, listarClientePorId, criarCliente, atualizarCliente, excluirCliente } = require("../controllers/clientController");
+const { 
+    listarClientes, 
+    listarClientePorId, 
+    criarCliente, 
+    atualizarCliente, 
+    excluirCliente,
+    // NOVAS FUNÇÕES DO CLIENTE CONTROLLER
+    adicionarAluguelAoCliente,
+    adicionarManutencaoAoCliente
+} = require("../controllers/clientController");
+
 const { listarCarros, listarMeusCarros } = require("../controllers/carrosController");
 const { criarAluguel, listarAlugueis, listarAlugueisPorCarro, atualizarAluguel, updateKilometragem } = require("../controllers/rentController");
 
 // 🛑 ALTERAÇÃO: REMOVIDO expenseController e ADICIONADO costController
-// const { criarDespesa, listarDespesas, resumoFinanceiro } = require("../controllers/expenseController"); 
 const { createCost, listCosts, financeSummary } = require("../controllers/costController"); 
 
-const { updateMaintenanceStatus, addMaintenanceCost } = require("../controllers/maintenanceController");
+// 🛑 ALTERAÇÃO: Importadas as novas funções do maintenanceController
+const { 
+    entrarEmManutencao, 
+    finalizarManutencao, 
+    addMaintenanceCost 
+} = require("../controllers/maintenanceController");
+
 const { enviarCodigoAlterarSenha, validarCodigoAlterarSenha, alterarSenhaInvestidor } = require("../controllers/investidorSenha");
 
 // ---------------- MIDDLEWARE ----------------
@@ -65,6 +80,10 @@ router.post("/clientes", criarCliente);
 router.put("/cliente/:id", atualizarCliente);
 router.delete("/cliente/:id", excluirCliente);
 
+// 🛑 NOVO: Rotas para vincular aluguel e débito de manutenção ao cliente
+router.put("/clientes/:id/aluguel-historico", adicionarAluguelAoCliente);
+router.put("/clientes/:id/manutencao-debito", adicionarManutencaoAoCliente);
+
 // INVESTIDORES (ADMIN)
 router.get("/investidores", listarInvestidores);
 router.get("/investidor/:id", listarPorId);
@@ -87,13 +106,17 @@ router.put("/alugueis/:id", atualizarAluguel);
 router.put("/alugueis/:id/kilometragem", updateKilometragem);
 
 // ---------- CUSTOS (Antigas DESPESAS) ----------
-// 🛑 ALTERAÇÃO: Rotas /despesas trocadas para /costs e usando as novas funções do costController
 router.post("/costs", createCost);
 router.get("/costs", listCosts);
 router.get("/financeiro/resumo", financeSummary);
 
-// MANUTENÇÃO
-router.put("/carro/:id/manutencao/status", updateMaintenanceStatus);
+// ---------- MANUTENÇÃO (Rotas Atualizadas) ----------
+// 🛑 ATUALIZADO: Rota para ENTRAR em Manutenção (apenas atualiza o status de entrada)
+router.put("/carro/:id/manutencao/entrada", entrarEmManutencao);
+// 🛑 ATUALIZADO: Rota para SAIR da Manutenção (registra custos e atualiza cliente)
+router.post("/carro/:id/manutencao/saida", finalizarManutencao);
+// Rota mantida para ADICIONAR CUSTOS acumulados (se ainda for utilizada)
 router.post("/carro/:id/manutencao/gasto", addMaintenanceCost);
+
 
 module.exports = router;
