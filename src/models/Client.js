@@ -7,12 +7,6 @@ const clientSchema = new mongoose.Schema(
     telefone: { type: String, required: true },
     cpf: { type: String, required: true, unique: true },
 
-    // URL do arquivo PDF salvo com Multer
-    contrato: {
-      type: String,
-      default: null,
-    },
-
     // Data da validade da CNH
     validadeCnh: {
       type: Date,
