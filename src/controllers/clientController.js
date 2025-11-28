@@ -11,21 +11,45 @@ exports.listarClientes = async (req, res) => {
   }
 };
 
-// Listar cliente por ID
-// ATUALIZADO: Popula 'alugueis.aluguelId' para pegar o detalhe do aluguel
+
+// Listar cliente por ID com manutenções dele
 exports.listarClientePorId = async (req, res) => {
   try {
-    const cliente = await Client.findById(req.params.id)
-      .populate("alugueis.aluguelId")
-      .populate("historicoManutencoes.carroId");
+    const cliente = await Client.findById(req.params.id);
     if (!cliente)
       return res.status(404).json({ mensagem: "Cliente não encontrado." });
-    res.json(cliente);
+
+    // Buscar todos os carros que possuem manutenções do cliente
+    const carros = await Car.find({ "manutencoes.cliente": cliente.nome }); // ou cliente._id se gravar o _id
+    const manutencoesDoCliente = [];
+
+    carros.forEach(car => {
+      car.manutencoes.forEach(m => {
+        if (m.cliente === cliente.nome) { // ou m.cliente.equals(cliente._id)
+          manutencoesDoCliente.push({
+            carroId: car._id,
+            modelo: car.modelo,
+            placa: car.placa,
+            entrada: m.entrada,
+            saida: m.saida,
+            gasto: m.gasto,
+            gastoCliente: m.gastoCliente,
+            gastoLocadora: m.gastoLocadora
+          });
+        }
+      });
+    });
+
+    res.json({
+      cliente,
+      manutencoes: manutencoesDoCliente
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ mensagem: "Erro ao buscar cliente." });
   }
 };
+
 
 // Criar novo cliente
 exports.criarCliente = async (req, res) => {
