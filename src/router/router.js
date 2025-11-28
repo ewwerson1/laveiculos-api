@@ -58,9 +58,9 @@ const Investidor = require("../models/Investor");
 router.post("/login/admin", loginAdmin);
 router.post("/login/investidor", loginInvestidor);
 
-router.post("/investidor/enviar-codigo", auth, enviarCodigoAlterarSenha);
-router.post("/investidor/validar-codigo", auth, validarCodigoAlterarSenha);
-router.post("/investidor/alterar-senha", auth, alterarSenhaInvestidor);
+router.post("/investidor/enviar-codigo", enviarCodigoAlterarSenha);
+router.post("/investidor/validar-codigo", validarCodigoAlterarSenha);
+router.post("/investidor/alterar-senha", alterarSenhaInvestidor);
 
 // ---------- ROTAS PROTEGIDAS (após auth) ----------
 router.use(auth);
