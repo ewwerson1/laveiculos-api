@@ -85,10 +85,6 @@ router.post("/clientes", criarCliente);
 router.put("/cliente/:id", atualizarCliente);
 router.delete("/cliente/:id", excluirCliente);
 
-// 🛑 NOVO: Rotas para vincular aluguel e débito de manutenção ao cliente
-router.put("/clientes/:id/aluguel-historico", adicionarAluguelAoCliente);
-router.put("/clientes/:id/manutencao-debito", adicionarManutencaoAoCliente);
-
 // INVESTIDORES (ADMIN)
 router.get("/investidores", listarInvestidores);
 router.get("/investidor/:id", listarPorId);

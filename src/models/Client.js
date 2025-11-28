@@ -1,19 +1,5 @@
 const mongoose = require("mongoose");
 
-// Sub-esquema para Manutenções do Cliente
-// Sub-esquema para Manutenções do Cliente
-const manutencaoClienteSchema = new mongoose.Schema({
-    carroId: { type: mongoose.Schema.Types.ObjectId, ref: "Car", required: true },
-    manutencaoId: { type: String, required: true }, 
-    valorDevido: { type: Number, default: 0 },
-    dataEntrada: { type: Date, default: Date.now },
-    statusPagamento: {
-        type: String,
-        enum: ["a_pagar", "quitado"],
-        default: "a_pagar",
-    },
-});
-// ...
 const clientSchema = new mongoose.Schema(
   {
     nome: { type: String, required: true },
@@ -33,24 +19,6 @@ const clientSchema = new mongoose.Schema(
       enum: ["ok", "atencao", "vencida"],
       default: "ok",
     },
-
-    // ATUALIZADO: O campo 'alugueis' agora armazena um objeto com o ID e o status
-    alugueis: [
-      {
-        aluguelId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "rents",
-        },
-        statusPagamento: {
-          type: String,
-          enum: ["a_pagar", "quitado"], // Para pagamentos de aluguel (ex: caução, multas) - se não for usado, pode remover, mas mantive para o modelo ser flexível.
-          default: "quitado",
-        },
-      },
-    ],
-    
-    // NOVO CAMPO: Histórico de Manutenções com custo para o cliente
-    historicoManutencoes: [manutencaoClienteSchema],
   },
   { timestamps: true }
 );
