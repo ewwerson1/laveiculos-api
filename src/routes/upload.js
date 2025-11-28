@@ -7,6 +7,7 @@ const Car = require("../models/Car");
 
 const uploadPath = path.join(process.cwd(), "public", "uploads");
 
+// Configuração do multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadPath),
   filename: (req, file, cb) => {
@@ -18,6 +19,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Rota de upload de foto do carro
 router.post("/api/upload/carro/:carId/foto", auth, upload.single("foto"), async (req, res) => {
   try {
     if (!req.file) {
@@ -28,7 +30,10 @@ router.post("/api/upload/carro/:carId/foto", auth, upload.single("foto"), async 
     const filePublicPath = `/uploads/${fileName}`;
     const fileDiskPath = path.join(uploadPath, fileName);
 
-    const carro = await Car.findById(req.user.id);
+    // Corrigido: buscar pelo carId da rota
+    const carro = await Car.findById(req.params.carId);
+    if (!carro) return res.status(404).json({ error: "Carro não encontrado" });
+
     carro.foto = filePublicPath;
     await carro.save();
 
