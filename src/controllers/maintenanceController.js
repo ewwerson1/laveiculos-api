@@ -6,12 +6,10 @@ const axios = require('axios'); // Para fazer chamadas internas (se necessário)
 const API = "https://laveiculos-api-1.onrender.com/api";
 
 // Função única para ENTRAR EM MANUTENÇÃO (Mantida do original)
-// Rota PUT /api/carro/:id/manutencao/status
 exports.entrarEmManutencao = async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, cliente } = req.body; // 👈 AGORA SIM
 
-    // Garante que o status passado é 'Manutenção'
     if (status !== "Manutenção") {
         return res.status(400).json({ error: "Use a rota de finalização para sair da manutenção." });
     }
@@ -23,21 +21,20 @@ exports.entrarEmManutencao = async (req, res) => {
         return res.status(400).json({ error: "Carro já está em manutenção." });
     }
 
-    // Lógica para ENTRAR EM MANUTENÇÃO
     const agora = new Date();
-    
-    // Zera os campos temporários (gastoManutencao é usado para acumular gastos enquanto em manutenção)
+
     car.gastoManutencao = 0;
     car.dataEntradaManutencao = agora;
-    car.dataSaidaManutencao = null; 
+    car.dataSaidaManutencao = null;
 
-    // Adiciona uma nova entrada vazia ao histórico
+    // Agora 'cliente' existe e será salvo corretamente
     car.manutencoes.push({
         entrada: agora,
         saida: null,
         gasto: 0,
-        gastoLocadora: 0, // Novos campos, valor inicial 0
-        gastoCliente: 0, // Novos campos, valor inicial 0
+        gastoLocadora: 0,
+        gastoCliente: 0,
+        cliente: cliente || null // 👈 GARANTE QUE SALVA ALGO
     });
 
     car.status = status;
