@@ -21,6 +21,16 @@ const ManutencaoSchema = new mongoose.Schema({
         type: Number, 
         default: 0 
     }
+      // Gasto total desta manutenção
+    gastoCliente: { 
+        type: Number, 
+        default: 0 
+    }
+      // Gasto total desta manutenção
+    gastoManutencao: { 
+        type: Number, 
+        default: 0 
+    }
 }, { _id: false }); // Não é necessário um _id para sub-documentos
 
 // 2. Aluguel (Histórico)
