@@ -54,9 +54,6 @@ exports.entrarEmManutencao = async (req, res) => {
 // FUNÇÃO: FINALIZAR MANUTENÇÃO
 // Atualiza o histórico e soma os custos finais ao acumulador vitalício (car.gastoManutencao).
 // -----------------------------------------------------
-const Car = require("../models/Car");
-const Client = require("../models/Client");
-const Rent = require("../models/Rent");
 
 exports.finalizarManutencao = async (req, res) => {
     const { id: carroId } = req.params;
