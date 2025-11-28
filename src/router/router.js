@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-
+const Client = require('../models/Client')
 // ---------------- CONTROLLERS ----------------
 const { loginAdmin } = require("../controllers/authController");
 const { loginInvestidor } = require("../controllers/authController");
