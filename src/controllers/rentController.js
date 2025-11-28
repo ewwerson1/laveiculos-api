@@ -4,8 +4,11 @@ const Car = require("../models/Car")
 // Criar novo aluguel
 exports.criarAluguel = async (req, res) => {
   try {
+    // GARANTE que o aluguel sempre nasce ativo
+    req.body.ativo = true;
+
     const novoAluguel = await Rent.create(req.body);
-    req.body.ativo = true; 
+
     const result = await Rent.findById(novoAluguel._id)
       .populate("investor", "nome email")
       .populate("carroId", "modelo placa marca");
