@@ -30,7 +30,11 @@ const ManutencaoSchema = new mongoose.Schema({
     gastoManutencao: { 
         type: Number, 
         default: 0 
-    }
+    },
+     cliente: {
+        type: String,
+        default: null 
+    } 
 }, { _id: false }); // Não é necessário um _id para sub-documentos
 
 // 2. Aluguel (Histórico)
