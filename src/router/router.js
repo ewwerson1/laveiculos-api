@@ -120,4 +120,33 @@ router.post("/carro/:id/manutencao/saida", finalizarManutencao);
 router.post("/carro/:id/manutencao/gasto", addMaintenanceCost);
 
 
+router.put("/cliente/pagamento/:id", async (req, res) => {
+  try {
+    const { valorPago } = req.body;
+    const clienteId = req.params.id;
+
+    if (!valorPago || typeof valorPago !== 'number' || valorPago <= 0) {
+      return res.status(400).json({ mensagem: "Valor de pagamento inválido." });
+    }
+
+    const clienteAtualizado = await Client.findByIdAndUpdate(
+      clienteId,
+      { $inc: { pago: valorPago } }, // <-- ESSA LINHA FAZ O INCREMENTO
+      { new: true } // Retorna o documento atualizado
+    );
+
+    if (!clienteAtualizado) {
+      return res.status(404).json({ mensagem: "Cliente não encontrado." });
+    }
+
+    res.status(200).json({ 
+      mensagem: "Pagamento registrado com sucesso!", 
+      cliente: clienteAtualizado 
+    });
+
+  } catch (error) {
+    res.status(500).json({ mensagem: "Erro ao registrar pagamento.", erro: error.message });
+  }
+});
+
 module.exports = router;
