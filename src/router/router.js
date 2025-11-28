@@ -17,6 +17,11 @@ const {
   excluirCarro
 } = require("../controllers/investidorController");
 
+const {encerrarAluguel} = require("../controllers/rentController")
+
+router.put("/alugueis/:id/finalizar", encerrarAluguel);
+
+
 const { 
     listarClientes, 
     listarClientePorId, 

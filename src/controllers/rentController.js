@@ -5,7 +5,7 @@ const Rent = require("../models/Rent");
 exports.criarAluguel = async (req, res) => {
   try {
     const novoAluguel = await Rent.create(req.body);
-
+    req.body.ativo = true; 
     const result = await Rent.findById(novoAluguel._id)
       .populate("investor", "nome email")
       .populate("carroId", "modelo placa marca");
@@ -13,6 +13,31 @@ exports.criarAluguel = async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error("ERRO criarAluguel:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.encerrarAluguel = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const km = Number(req.body.kmFinal || 0);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "ID inválido." });
+    }
+
+    const aluguel = await Rent.findById(id);
+    if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
+    if (!aluguel.ativo) return res.status(400).json({ error: "Este aluguel já está finalizado." });
+
+    // Atualiza km final
+    aluguel.kilometragem = km;
+    aluguel.ativo = false;
+    aluguel.fim = new Date();
+    await aluguel.save();
+
+    res.json({ ok: true, message: "Aluguel finalizado com sucesso." });
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -91,20 +116,22 @@ exports.atualizarAluguel = async (req, res) => {
 exports.updateKilometragem = async (req, res) => {
   try {
     const { id } = req.params;
-    const km = Number(req.body.kilometragem); // aqui aceita 'kilometragem'
+    const km = Number(req.body.kilometragem);
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: "ID do Aluguel inválido." });
     }
 
-    if (isNaN(km)) {
-      return res.status(400).json({ error: "Informe kilometragem válida." });
-    }
-
     const aluguel = await Rent.findById(id);
     if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
 
+    // Atualiza km
     aluguel.kilometragem = (aluguel.kilometragem || 0) + km;
+
+    // FINALIZA O ALUGUEL
+    aluguel.ativo = false;
+    aluguel.fim = new Date();
+
     await aluguel.save();
 
     res.json(aluguel);
@@ -114,4 +141,3 @@ exports.updateKilometragem = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
