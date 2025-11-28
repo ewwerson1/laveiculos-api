@@ -20,12 +20,12 @@ const ManutencaoSchema = new mongoose.Schema({
     gasto: { 
         type: Number, 
         default: 0 
-    }
+    },
       // Gasto total desta manutenção
     gastoCliente: { 
         type: Number, 
         default: 0 
-    }
+    },
       // Gasto total desta manutenção
     gastoManutencao: { 
         type: Number, 
