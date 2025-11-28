@@ -73,28 +73,35 @@ exports.finalizarManutencao = async (req, res) => {
     const agora = new Date();
     const custoCliente = Number(gastoCliente || 0);
     const custoLocadora = Number(gastoLocadora || 0);
-    const custosAdicionais = custoCliente + custoLocadora;
 
     const ultimaManutencao = car.manutencoes?.[car.manutencoes.length - 1];
     if (!ultimaManutencao) {
       return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
     }
 
-    ultimaManutencao.gasto = (ultimaManutencao.gasto || 0) + custosAdicionais;
-    ultimaManutencao.gastoLocadora = (ultimaManutencao.gastoLocadora || 0) + custoLocadora;
-    ultimaManutencao.gastoCliente = (ultimaManutencao.gastoCliente || 0) + custoCliente;
+    // Inicializa campos caso estejam indefinidos
+    ultimaManutencao.gasto = ultimaManutencao.gasto || 0;
+    ultimaManutencao.gastoCliente = ultimaManutencao.gastoCliente || 0;
+    ultimaManutencao.gastoLocadora = ultimaManutencao.gastoLocadora || 0;
+
+    // Soma os valores
+    ultimaManutencao.gastoCliente += custoCliente;
+    ultimaManutencao.gastoLocadora += custoLocadora;
+    ultimaManutencao.gasto = ultimaManutencao.gastoCliente + ultimaManutencao.gastoLocadora;
     ultimaManutencao.saida = agora;
 
-    car.gastoManutencao = (car.gastoManutencao || 0) + custosAdicionais;
+    // Atualiza gastos acumulados no carro
+    car.gastoManutencao = (car.gastoManutencao || 0) + custoCliente + custoLocadora;
     car.status = novoStatus;
     car.dataSaidaManutencao = agora;
 
-    // Atualiza o histórico do cliente
+    // Atualiza o histórico do cliente apenas com gastoCliente
     if (custoCliente > 0 && ultimaManutencao.cliente) {
       const cliente = await Client.findOne({ nome: ultimaManutencao.cliente });
       if (cliente) {
         cliente.historicoManutencoes.push({
           carroId,
+          manutencaoId: ultimaManutencao._id,
           valorDevido: custoCliente,
           statusPagamento: "a_pagar",
         });
@@ -108,6 +115,7 @@ exports.finalizarManutencao = async (req, res) => {
     car.markModified("manutencoes");
     await car.save();
 
+    console.log("[DEBUG] Manutenção finalizada com sucesso:", ultimaManutencao);
     res.json(car);
 
   } catch (err) {
