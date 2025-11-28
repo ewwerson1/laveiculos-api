@@ -54,87 +54,67 @@ exports.entrarEmManutencao = async (req, res) => {
 // FUNÇÃO: FINALIZAR MANUTENÇÃO
 // Atualiza o histórico e soma os custos finais ao acumulador vitalício (car.gastoManutencao).
 // -----------------------------------------------------
+const Car = require("../models/Car");
+const Client = require("../models/Client");
+const Rent = require("../models/Rent");
+
 exports.finalizarManutencao = async (req, res) => {
-    const { id: carroId } = req.params;
-   
-    const { status: novoStatus, gastoLocadora, gastoCliente } = req.body; 
+    const { id: carroId } = req.params;
+    const { status: novoStatus, gastoLocadora, gastoCliente } = req.body; 
 
-    if (novoStatus === "Manutenção") {
-        return res.status(400).json({ error: "Use a rota de entrada para iniciar a manutenção." });
-    }
-    
-    const car = await Car.findById(carroId);
-    if (!car) return res.status(404).json({ error: "Carro não encontrado" });
-    
-    if (car.status !== "Manutenção") {
-        return res.status(400).json({ error: "Carro não está em manutenção para ser finalizada." });
-    }
+    if (novoStatus === "Manutenção") {
+        return res.status(400).json({ error: "Use a rota de entrada para iniciar a manutenção." });
+    }
+    
+    const car = await Car.findById(carroId);
+    if (!car) return res.status(404).json({ error: "Carro não encontrado" });
+    
+    if (car.status !== "Manutenção") {
+        return res.status(400).json({ error: "Carro não está em manutenção para ser finalizada." });
+    }
 
-    const agora = new Date();
-    const custoCliente = Number(gastoCliente || 0);
-    const custoLocadora = Number(gastoLocadora || 0);
-    const custosAdicionais = custoCliente + custoLocadora; // Custos da modal (saída)
+    const agora = new Date();
+    const custoCliente = Number(gastoCliente || 0);
+    const custoLocadora = Number(gastoLocadora || 0);
+    const custosAdicionais = custoCliente + custoLocadora;
 
-    const ultimaManutencao = car.manutencoes[car.manutencoes.length - 1];
-    
-    if (ultimaManutencao) {
-        // 1. Acumula os custos desta saída no campo VITALÍCIO do carro
-        car.gastoManutencao = (car.gastoManutencao || 0) + custosAdicionais;
-        
-        // 2. Atualiza o histórico (Aqui você pode escolher: o custo TOTAL da ocorrencia ou o vitalício)
-        // Opção A: Custo total acumulado do carro (Vitalício, conforme sua preferência no `gastoManutencao` do carro)
-        // ultimaManutencao.gasto = car.gastoManutencao;
-        
-        // Opção B: Custo TOTAL desta OCORRÊNCIA de manutenção (preferencial para o frontend somar)
-        // Para que o frontend some corretamente, o histórico deve registrar apenas o gasto desta ocorrência.
-        ultimaManutencao.gasto = ultimaManutencao.gasto + custosAdicionais; // Soma o que foi acumulado + o que veio da modal
+    const ultimaManutencao = car.manutencoes[car.manutencoes.length - 1];
+    
+    if (ultimaManutencao) {
+        car.gastoManutencao = (car.gastoManutencao || 0) + custosAdicionais;
+        ultimaManutencao.gasto = (ultimaManutencao.gasto || 0) + custosAdicionais;
+        ultimaManutencao.saida = agora;
+        ultimaManutencao.gastoLocadora = (ultimaManutencao.gastoLocadora || 0) + custoLocadora;
+        ultimaManutencao.gastoCliente = (ultimaManutencao.gastoCliente || 0) + custoCliente;
 
-        ultimaManutencao.saida = agora;
-        ultimaManutencao.gastoLocadora = (ultimaManutencao.gastoLocadora || 0) + custoLocadora;
-        ultimaManutencao.gastoCliente = (ultimaManutencao.gastoCliente || 0) + custoCliente;
+        console.log(`[DEBUG] Finalizando Manutenção: Custo TOTAL DESTA OCORRÊNCIA: ${ultimaManutencao.gasto}, Vitalício no Carro: ${car.gastoManutencao}`);
+    } else {
+        return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
+    }
 
+    car.status = novoStatus;
+    car.dataSaidaManutencao = agora;
 
-        console.log(`[DEBUG] Finalizando Manutenção: Custo TOTAL DESTA OCORRÊNCIA: ${ultimaManutencao.gasto}, Vitalício no Carro: ${car.gastoManutencao}`);
-        
-    } else {
-        return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
-    }
+    // ✅ Atualiza o histórico do cliente diretamente no MongoDB
+    if (custoCliente > 0 && ultimaManutencao.cliente) {
+        const cliente = await Client.findOne({ nome: ultimaManutencao.cliente });
+        if (cliente) {
+            cliente.historicoManutencoes.push({
+                carroId: carroId,
+                valorDevido: custoCliente,
+                statusPagamento: "a_pagar",
+            });
+            await cliente.save();
+            console.log(`[DEBUG] Débito de R$${custoCliente} registrado para cliente ${cliente._id}`);
+        } else {
+            console.warn(`[WARN] Cliente "${ultimaManutencao.cliente}" não encontrado para débito.`);
+        }
+    }
 
-    // 3. Atualiza o status
-    car.status = novoStatus;
-    car.dataSaidaManutencao = agora;
-    // ❌ REMOVIDO: car.gastoManutencao = 0; // NUNCA ZERA SE FOR VITALÍCIO!
+    car.markModified("manutencoes");
+    await car.save();
 
-
-    // Registrar débito do cliente (Mantido)
-    if (custoCliente > 0) {
-        
-        const ultimoAluguel = await Rent.findOne({ carroId }).sort({ inicio: -1 });
-
-        if (ultimoAluguel && ultimoAluguel.clienteId) {
-            const clienteId = ultimoAluguel.clienteId;
-            const manutencaoId = ultimaManutencao._id;
-
-            try {
-                await axios.put(`${API}/clientes/${clienteId}/manutencao-debito`, {
-                    carroId,
-                    manutencaoId,
-                    valorDevido: custoCliente,
-                });
-                console.log(`[DEBUG] Débito de R$${custoCliente} registrado para cliente ${clienteId}`);
-            } catch (error) {
-                console.error("Erro ao registrar manutenção no cliente:", error.response?.data || error.message);
-            }
-        } else {
-            console.warn(`[WARN] Cliente não identificado para débito de R$ ${custoCliente}`);
-        }
-    }
-
-
-    car.markModified("manutencoes");
-    await car.save();
-
-    res.json(car);
+    res.json(car);
 };
 
 
