@@ -44,78 +44,74 @@ exports.entrarEmManutencao = async (req, res) => {
     res.json(car);
 };
 
-// Função única para FINALIZAR MANUTENÇÃO (Substitui a lógica de SAIR)
-// Rota POST /api/carro/:id/manutencao/saidaexports.finalizarManutencao = async (req, res) => {
-    const { id: carroId } = req.params;
-    const { status: novoStatus, gastoLocadora, gastoCliente } = req.body;
+exports.finalizarManutencao = async (req, res) => {
+    const { id: carroId } = req.params;
+   
+    const { status: novoStatus, gastoLocadora, gastoCliente } = req.body; 
 
-    if (novoStatus === "Manutenção") {
-        return res.status(400).json({ error: "Use a rota de entrada para iniciar a manutenção." });
-    }
-    
-    const car = await Car.findById(carroId);
-    if (!car) return res.status(404).json({ error: "Carro não encontrado" });
-    
-    if (car.status !== "Manutenção") {
-        return res.status(400).json({ error: "Carro não está em manutenção para ser finalizada." });
-    }
+    if (novoStatus === "Manutenção") {
+        return res.status(400).json({ error: "Use a rota de entrada para iniciar a manutenção." });
+    }
+    
+    const car = await Car.findById(carroId);
+    if (!car) return res.status(404).json({ error: "Carro não encontrado" });
+    
+    if (car.status !== "Manutenção") {
+        return res.status(400).json({ error: "Carro não está em manutenção para ser finalizada." });
+    }
 
-    const agora = new Date();
-    const custoCliente = Number(gastoCliente || 0);
-    const custoLocadora = Number(gastoLocadora || 0);
-    const somaCustos = custoCliente + custoLocadora;
-
-    // Incrementa o gastoManutencao
-    car.gastoManutencao = (car.gastoManutencao || 0) + somaCustos;
-    console.log(`[DEBUG] Novo gastoManutencao do carro ${carroId}: ${car.gastoManutencao}`);
-
-    // Atualiza o último item do histórico de manutenção
-    const ultimaManutencao = car.manutencoes[car.manutencoes.length - 1];
-    if (ultimaManutencao) {
-        ultimaManutencao.saida = agora;
-        ultimaManutencao.gasto = car.gastoManutencao; // total acumulado
-        ultimaManutencao.gastoLocadora = (ultimaManutencao.gastoLocadora || 0) + custoLocadora;
-        ultimaManutencao.gastoCliente = (ultimaManutencao.gastoCliente || 0) + custoCliente;
+    const agora = new Date();
+    const custoCliente = Number(gastoCliente || 0);
+    const custoLocadora = Number(gastoLocadora || 0);
+    const custoTotalDestaManutencao = custoCliente + custoLocadora; 
+    const gastoAcumuladoNoCarro = car.gastoManutencao + custoTotalDestaManutencao;
+    const ultimaManutencao = car.manutencoes[car.manutencoes.length - 1];
+    if (ultimaManutencao) {
+        ultimaManutencao.saida = agora;
+        ultimaManutencao.gasto = custoTotalDestaManutencao; 
+        ultimaManutencao.gastoLocadora = custoLocadora;
+        ultimaManutencao.gastoCliente = custoCliente;
 
         console.log(`[DEBUG] Atualizando manutenção: gastoLocadora=${ultimaManutencao.gastoLocadora}, gastoCliente=${ultimaManutencao.gastoCliente}, total=${ultimaManutencao.gasto}`);
-    } else {
-        return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
-    }
+            } else {
+                return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
+          }
 
-    // Registrar débito do cliente
-    if (custoCliente > 0) {
-        const Rent = require('../models/Rent');
-        const ultimoAluguel = await Rent.findOne({ carroId }).sort({ inicio: -1 });
+    // 3. Atualiza o status e zera o acumulador temporário, se a manutenção foi finalizada.
+    car.status = novoStatus;
+    car.dataSaidaManutencao = agora;
+    car.gastoManutencao = 0; 
 
-        if (ultimoAluguel && ultimoAluguel.clienteId) {
-            const clienteId = ultimoAluguel.clienteId;
-            const manutencaoId = ultimaManutencao._id;
+    // Registrar débito do cliente (Mantido inalterado)
+    if (custoCliente > 0) {
+        const Rent = require('../models/Rent');
+        const ultimoAluguel = await Rent.findOne({ carroId }).sort({ inicio: -1 });
+        // ... (resto do bloco de débito do cliente mantido) ...
+        if (ultimoAluguel && ultimoAluguel.clienteId) {
+            const clienteId = ultimoAluguel.clienteId;
+            const manutencaoId = ultimaManutencao._id;
 
-            try {
-                await axios.put(`${API}/clientes/${clienteId}/manutencao-debito`, {
-                    carroId,
-                    manutencaoId,
-                    valorDevido: custoCliente,
-                });
-                console.log(`[DEBUG] Débito de R$${custoCliente} registrado para cliente ${clienteId}`);
-            } catch (error) {
-                console.error("Erro ao registrar manutenção no cliente:", error.response?.data || error.message);
-            }
-        } else {
-            console.warn(`[WARN] Cliente não identificado para débito de R$ ${custoCliente}`);
-        }
-    }
+            try {
+                await axios.put(`${API}/clientes/${clienteId}/manutencao-debito`, {
+                    carroId,
+                    manutencaoId,
+                    valorDevido: custoCliente,
+                });
+                console.log(`[DEBUG] Débito de R$${custoCliente} registrado para cliente ${clienteId}`);
+            } catch (error) {
+                console.error("Erro ao registrar manutenção no cliente:", error.response?.data || error.message);
+            }
+        } else {
+            console.warn(`[WARN] Cliente não identificado para débito de R$ ${custoCliente}`);
+        }
+    }
 
-    // Finaliza manutenção
-    car.status = novoStatus;
-    car.dataSaidaManutencao = agora;
 
-    car.markModified("manutencoes");
-    await car.save();
+    car.markModified("manutencoes");
+    await car.save();
 
-    res.json(car);
+    res.json(car);
 };
-
 
 // Se você ainda quiser uma rota para ADICIONAR CUSTOS durante a manutenção, mantenha esta.
 // Caso contrário, remova-a, pois o fluxo foi simplificado para registrar os custos apenas na saída.
