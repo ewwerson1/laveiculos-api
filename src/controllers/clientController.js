@@ -99,6 +99,7 @@ exports.adicionarManutencaoAoCliente = async (req, res) => {
     if (valorDevido > 0) {
       cliente.historicoManutencoes.push({
         carroId,
+        manutencaoId,
         valorDevido,
         statusPagamento: "a_pagar",
       });
