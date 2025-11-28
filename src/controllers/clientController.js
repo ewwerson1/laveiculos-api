@@ -1,4 +1,5 @@
 const Client = require("../models/Client");
+const Car = require("../models/Car");
 
 // Listar todos os clientes
 exports.listarClientes = async (req, res) => {
@@ -11,21 +12,20 @@ exports.listarClientes = async (req, res) => {
   }
 };
 
-
-// Listar cliente por ID com manutenções dele
+// Listar cliente por ID com manutenções dele (pesquisando pelo nome)
 exports.listarClientePorId = async (req, res) => {
   try {
     const cliente = await Client.findById(req.params.id);
     if (!cliente)
       return res.status(404).json({ mensagem: "Cliente não encontrado." });
 
-    // Buscar todos os carros que possuem manutenções do cliente
-    const carros = await Car.find({ "manutencoes.cliente": cliente.nome }); // ou cliente._id se gravar o _id
+    // Buscar todos os carros que possuem manutenções do cliente pelo nome
+    const carros = await Car.find({ "manutencoes.cliente": cliente.nome });
     const manutencoesDoCliente = [];
 
     carros.forEach(car => {
       car.manutencoes.forEach(m => {
-        if (m.cliente === cliente.nome) { // ou m.cliente.equals(cliente._id)
+        if (m.cliente === cliente.nome) {
           manutencoesDoCliente.push({
             carroId: car._id,
             modelo: car.modelo,
@@ -50,7 +50,6 @@ exports.listarClientePorId = async (req, res) => {
   }
 };
 
-
 // Criar novo cliente
 exports.criarCliente = async (req, res) => {
   try {
@@ -70,7 +69,7 @@ exports.atualizarCliente = async (req, res) => {
     const cliente = await Client.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true } // runValidators para reavaliar o pre('save')
+      { new: true, runValidators: true }
     );
     if (!cliente)
       return res.status(404).json({ mensagem: "Cliente não encontrado." });
