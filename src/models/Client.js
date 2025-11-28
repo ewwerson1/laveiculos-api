@@ -1,18 +1,19 @@
 const mongoose = require("mongoose");
 
 // Sub-esquema para Manutenções do Cliente
+// Sub-esquema para Manutenções do Cliente
 const manutencaoClienteSchema = new mongoose.Schema({
-  carroId: { type: mongoose.Schema.Types.ObjectId, ref: "Car", required: true },
-  manutencaoId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  valorDevido: { type: Number, default: 0 },
-  dataEntrada: { type: Date, default: Date.now },
-  statusPagamento: {
-    type: String,
-    enum: ["a_pagar", "quitado"],
-    default: "a_pagar",
-  },
+    carroId: { type: mongoose.Schema.Types.ObjectId, ref: "Car", required: true },
+    manutencaoId: { type: String, required: true }, 
+    valorDevido: { type: Number, default: 0 },
+    dataEntrada: { type: Date, default: Date.now },
+    statusPagamento: {
+        type: String,
+        enum: ["a_pagar", "quitado"],
+        default: "a_pagar",
+    },
 });
-
+// ...
 const clientSchema = new mongoose.Schema(
   {
     nome: { type: String, required: true },
