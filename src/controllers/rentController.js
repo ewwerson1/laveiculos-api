@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Rent = require("../models/Rent");
-
+const Car = require("../models/Car")
 // Criar novo aluguel
 exports.criarAluguel = async (req, res) => {
   try {
@@ -114,30 +114,36 @@ exports.atualizarAluguel = async (req, res) => {
 
 // Atualização de quilometragem
 exports.updateKilometragem = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const km = Number(req.body.kilometragem);
+    try {
+        const { id } = req.params;
+        const km = Number(req.body.kilometragem);
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "ID do Aluguel inválido." });
-    }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "ID do Aluguel inválido." });
+        }
 
-    const aluguel = await Rent.findById(id);
-    if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
+        const aluguel = await Rent.findById(id);
+        if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
+        if (!aluguel.ativo) return res.status(400).json({ error: "Este aluguel já está finalizado." }); // Garantia
 
-    // Atualiza km
-    aluguel.kilometragem = (aluguel.kilometragem || 0) + km;
+        // 1. Atualiza km e finaliza o aluguel
+        aluguel.kilometragem = (aluguel.kilometragem || 0) + km;
+        aluguel.ativo = false;
+        aluguel.fim = new Date();
 
-    // FINALIZA O ALUGUEL
-    aluguel.ativo = false;
-    aluguel.fim = new Date();
+        await aluguel.save();
 
-    await aluguel.save();
+        // 2. ATUALIZA O STATUS DO CARRO PARA DISPONÍVEL (CORREÇÃO)
+        await Car.findByIdAndUpdate(
+            aluguel.carroId,
+            { status: "Disponível" },
+            { new: true }
+        );
 
-    res.json(aluguel);
+        res.json(aluguel);
 
-  } catch (error) {
-    console.error("Erro updateKilometragem:", error);
-    res.status(500).json({ error: error.message });
-  }
+    } catch (error) {
+        console.error("Erro updateKilometragem:", error);
+        res.status(500).json({ error: error.message });
+    }
 };
