@@ -36,9 +36,13 @@ const {
 const { listarCarros, listarMeusCarros } = require("../controllers/carrosController");
 const { criarAluguel, listarAlugueis, listarAlugueisPorCarro, atualizarAluguel, updateKilometragem } = require("../controllers/rentController");
 
-// 🛑 ALTERAÇÃO: REMOVIDO expenseController e ADICIONADO costController
-const { createCost, listCosts, financeSummary } = require("../controllers/costController"); 
+const { createCost, listCosts, financeSummary, updateCost, deleteCost } = require("../controllers/costController"); 
 
+router.post("/costs", createCost);
+router.get("/costs", listCosts);
+router.put("/costs/:id", updateCost);    // <--- NOVA ROTA
+router.delete("/costs/:id", deleteCost); // <--- NOVA ROTA
+router.get("/financeiro/resumo", financeSummary);
 // 🛑 ALTERAÇÃO: Importadas as novas funções do maintenanceController
 const { 
     entrarEmManutencao, 
