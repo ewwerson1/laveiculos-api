@@ -7,56 +7,44 @@ const API = "https://laveiculos-api-1.onrender.com/api";
 
 // Função única para ENTRAR EM MANUTENÇÃO (Mantida do original)
 // Rota PUT /api/carro/:id/manutencao/status
-// ENTRAR EM MANUTENÇÃO
-exports.entrarManutencao = async (req, res) => {
-  try {
-    const { carId } = req.params;
+exports.entrarEmManutencao = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
 
-    const carro = await Car.findById(carId);
-
-    if (!carro) {
-      return res.status(404).json({ error: "Carro não encontrado" });
+    // Garante que o status passado é 'Manutenção'
+    if (status !== "Manutenção") {
+        return res.status(400).json({ error: "Use a rota de finalização para sair da manutenção." });
     }
 
-    // --- BUSCAR ÚLTIMO ALUGUEL ---
-    let clienteUltimoAluguel = null;
+    const car = await Car.findById(id);
+    if (!car) return res.status(404).json({ error: "Carro não encontrado" });
 
-    if (carro.status === "Alugado") {
-      // rentalHistory está ordenado do mais novo para o mais velho?
-      // Se não estiver, ordena:
-      if (carro.rentalHistory.length > 0) {
-        const ultimoAluguel = carro.rentalHistory[carro.rentalHistory.length - 1];
-
-        if (ultimoAluguel && ultimoAluguel.cliente) {
-          clienteUltimoAluguel = ultimoAluguel.cliente;
-        }
-      }
+    if (car.status === "Manutenção") {
+        return res.status(400).json({ error: "Carro já está em manutenção." });
     }
 
-    // --- REGISTRAR A ENTRADA NA MANUTENÇÃO ---
-    carro.manutencoes.push({
-      entrada: new Date(),
-      saida: null,
-      gasto: 0,
-      gastoCliente: 0,
-      gastoManutencao: 0,
-      cliente: clienteUltimoAluguel || null  // <- AQUI SALVA O CLIENTE
+    // Lógica para ENTRAR EM MANUTENÇÃO
+    const agora = new Date();
+    
+    // Zera os campos temporários (gastoManutencao é usado para acumular gastos enquanto em manutenção)
+    car.gastoManutencao = 0;
+    car.dataEntradaManutencao = agora;
+    car.dataSaidaManutencao = null; 
+
+    // Adiciona uma nova entrada vazia ao histórico
+    car.manutencoes.push({
+        entrada: agora,
+        saida: null,
+        gasto: 0,
+        gastoLocadora: 0, // Novos campos, valor inicial 0
+        gastoCliente: 0, // Novos campos, valor inicial 0
     });
 
-    carro.status = "Manutenção";
+    car.status = status;
+    car.markModified("manutencoes");
+    await car.save();
 
-    await carro.save();
-
-    res.json({
-      message: "Carro entrou em manutenção",
-      clienteRelacionado: clienteUltimoAluguel,
-      carro
-    });
-
-  } catch (error) {
-    console.error("Erro ao registrar entrada na manutenção:", error);
-    res.status(500).json({ error: "Erro ao iniciar manutenção" });
-  }
+    res.json(car);
 };
 
 // Função única para FINALIZAR MANUTENÇÃO (Substitui a lógica de SAIR)
