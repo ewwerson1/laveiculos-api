@@ -1,12 +1,10 @@
 const mongoose = require("mongoose");
 const Rent = require("../models/Rent");
-const Car = require("../models/Car")
+const Car = require("../models/Car");
+
 // Criar novo aluguel
 exports.criarAluguel = async (req, res) => {
   try {
-    // GARANTE que o aluguel sempre nasce ativo
-    req.body.ativo = true;
-
     const novoAluguel = await Rent.create(req.body);
 
     const result = await Rent.findById(novoAluguel._id)
@@ -31,11 +29,9 @@ exports.encerrarAluguel = async (req, res) => {
 
     const aluguel = await Rent.findById(id);
     if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
-    if (!aluguel.ativo) return res.status(400).json({ error: "Este aluguel já está finalizado." });
 
     // Atualiza km final
     aluguel.kilometragem = km;
-    aluguel.ativo = false;
     aluguel.fim = new Date();
     await aluguel.save();
 
@@ -113,40 +109,37 @@ exports.atualizarAluguel = async (req, res) => {
     console.error("ERRO atualizarAluguel:", error);
     res.status(500).json({ error: error.message });
   }
-}
+};
 
-// Atualização de quilometragem
+// Atualização de quilometragem + finalização
 exports.updateKilometragem = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const km = Number(req.body.kilometragem);
+  try {
+    const { id } = req.params;
+    const km = Number(req.body.kilometragem);
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ error: "ID do Aluguel inválido." });
-        }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "ID do Aluguel inválido." });
+    }
 
-        const aluguel = await Rent.findById(id);
-        if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
-        if (!aluguel.ativo) return res.status(400).json({ error: "Este aluguel já está finalizado." }); // Garantia
+    const aluguel = await Rent.findById(id);
+    if (!aluguel) return res.status(404).json({ error: "Aluguel não encontrado." });
 
-        // 1. Atualiza km e finaliza o aluguel
-        aluguel.kilometragem = (aluguel.kilometragem || 0) + km;
-        aluguel.ativo = false;
-        aluguel.fim = new Date();
+    // Atualiza km e finaliza
+    aluguel.kilometragem = (aluguel.kilometragem || 0) + km;
+    aluguel.fim = new Date();
+    await aluguel.save();
 
-        await aluguel.save();
+    // Atualiza o status do carro para Disponível
+    await Car.findByIdAndUpdate(
+      aluguel.carroId,
+      { status: "Disponível" },
+      { new: true }
+    );
 
-        // 2. ATUALIZA O STATUS DO CARRO PARA DISPONÍVEL (CORREÇÃO)
-        await Car.findByIdAndUpdate(
-            aluguel.carroId,
-            { status: "Disponível" },
-            { new: true }
-        );
+    res.json(aluguel);
 
-        res.json(aluguel);
-
-    } catch (error) {
-        console.error("Erro updateKilometragem:", error);
-        res.status(500).json({ error: error.message });
-    }
+  } catch (error) {
+    console.error("Erro updateKilometragem:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
