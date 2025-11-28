@@ -56,18 +56,18 @@ exports.entrarEmManutencao = async (req, res) => {
 // -----------------------------------------------------
 
 exports.finalizarManutencao = async (req, res) => {
+  try {
     const { id: carroId } = req.params;
-    const { status: novoStatus, gastoLocadora, gastoCliente } = req.body; 
+    const { status: novoStatus, gastoLocadora, gastoCliente } = req.body;
 
     if (novoStatus === "Manutenção") {
-        return res.status(400).json({ error: "Use a rota de entrada para iniciar a manutenção." });
+      return res.status(400).json({ error: "Use a rota de entrada para iniciar a manutenção." });
     }
-    
+
     const car = await Car.findById(carroId);
     if (!car) return res.status(404).json({ error: "Carro não encontrado" });
-    
     if (car.status !== "Manutenção") {
-        return res.status(400).json({ error: "Carro não está em manutenção para ser finalizada." });
+      return res.status(400).json({ error: "Carro não está em manutenção para ser finalizada." });
     }
 
     const agora = new Date();
@@ -75,45 +75,46 @@ exports.finalizarManutencao = async (req, res) => {
     const custoLocadora = Number(gastoLocadora || 0);
     const custosAdicionais = custoCliente + custoLocadora;
 
-    const ultimaManutencao = car.manutencoes[car.manutencoes.length - 1];
-    
-    if (ultimaManutencao) {
-        car.gastoManutencao = (car.gastoManutencao || 0) + custosAdicionais;
-        ultimaManutencao.gasto = (ultimaManutencao.gasto || 0) + custosAdicionais;
-        ultimaManutencao.saida = agora;
-        ultimaManutencao.gastoLocadora = (ultimaManutencao.gastoLocadora || 0) + custoLocadora;
-        ultimaManutencao.gastoCliente = (ultimaManutencao.gastoCliente || 0) + custoCliente;
-
-        console.log(`[DEBUG] Finalizando Manutenção: Custo TOTAL DESTA OCORRÊNCIA: ${ultimaManutencao.gasto}, Vitalício no Carro: ${car.gastoManutencao}`);
-    } else {
-        return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
+    const ultimaManutencao = car.manutencoes?.[car.manutencoes.length - 1];
+    if (!ultimaManutencao) {
+      return res.status(500).json({ error: "Erro: Histórico de manutenção incompleto." });
     }
 
+    ultimaManutencao.gasto = (ultimaManutencao.gasto || 0) + custosAdicionais;
+    ultimaManutencao.gastoLocadora = (ultimaManutencao.gastoLocadora || 0) + custoLocadora;
+    ultimaManutencao.gastoCliente = (ultimaManutencao.gastoCliente || 0) + custoCliente;
+    ultimaManutencao.saida = agora;
+
+    car.gastoManutencao = (car.gastoManutencao || 0) + custosAdicionais;
     car.status = novoStatus;
     car.dataSaidaManutencao = agora;
 
-    // ✅ Atualiza o histórico do cliente diretamente no MongoDB
+    // Atualiza o histórico do cliente
     if (custoCliente > 0 && ultimaManutencao.cliente) {
-        const cliente = await Client.findOne({ nome: ultimaManutencao.cliente });
-        if (cliente) {
-            cliente.historicoManutencoes.push({
-                carroId: carroId,
-                valorDevido: custoCliente,
-                statusPagamento: "a_pagar",
-            });
-            await cliente.save();
-            console.log(`[DEBUG] Débito de R$${custoCliente} registrado para cliente ${cliente._id}`);
-        } else {
-            console.warn(`[WARN] Cliente "${ultimaManutencao.cliente}" não encontrado para débito.`);
-        }
+      const cliente = await Client.findOne({ nome: ultimaManutencao.cliente });
+      if (cliente) {
+        cliente.historicoManutencoes.push({
+          carroId,
+          valorDevido: custoCliente,
+          statusPagamento: "a_pagar",
+        });
+        await cliente.save();
+        console.log(`[DEBUG] Débito de R$${custoCliente} registrado para cliente ${cliente._id}`);
+      } else {
+        console.warn(`[WARN] Cliente "${ultimaManutencao.cliente}" não encontrado para débito.`);
+      }
     }
 
     car.markModified("manutencoes");
     await car.save();
 
     res.json(car);
-};
 
+  } catch (err) {
+    console.error("Erro ao finalizar manutenção:", err);
+    res.status(500).json({ error: "Erro interno ao finalizar manutenção." });
+  }
+};
 
 // -----------------------------------------------------
 // FUNÇÃO: ADD MAINTENANCE COST
