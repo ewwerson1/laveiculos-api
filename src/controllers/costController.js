@@ -109,3 +109,66 @@ exports.financeSummary = async (req, res) => {
         res.status(500).json({ mensagem: "Erro ao gerar resumo financeiro." });
     }
 };
+
+// =========================================================
+// 4. ATUALIZAR CUSTO
+// =========================================================
+exports.updateCost = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { description, value, category, car, date } = req.body;
+
+        const updatedCost = await Cost.findByIdAndUpdate(
+            id,
+            { description, value, category, car: category === 'Manutenção' ? car : null, date },
+            { new: true }
+        );
+
+        if (!updatedCost) return res.status(404).json({ mensagem: 'Custo não encontrado.' });
+
+        // Se for manutenção, atualiza gastoManutencao do carro
+        if (category === 'Manutenção' && car) {
+            // Recalcula gastoManutencao total do carro
+            const totalManut = await Cost.aggregate([
+                { $match: { car: mongoose.Types.ObjectId(car), category: 'Manutenção' } },
+                { $group: { _id: null, total: { $sum: "$value" } } }
+            ]);
+            const gastoTotal = totalManut[0]?.total || 0;
+            await Car.findByIdAndUpdate(car, { gastoManutencao: gastoTotal });
+        }
+
+        res.json(updatedCost);
+    } catch (err) {
+        console.error("Erro ao atualizar custo:", err);
+        res.status(400).json({ mensagem: 'Erro ao atualizar custo.', erro: err.message });
+    }
+};
+
+// =========================================================
+// 5. DELETAR CUSTO
+// =========================================================
+exports.deleteCost = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const cost = await Cost.findById(id);
+        if (!cost) return res.status(404).json({ mensagem: 'Custo não encontrado.' });
+
+        await cost.remove();
+
+        // Se for manutenção, atualiza gastoManutencao do carro
+        if (cost.category === 'Manutenção' && cost.car) {
+            const totalManut = await Cost.aggregate([
+                { $match: { car: mongoose.Types.ObjectId(cost.car), category: 'Manutenção' } },
+                { $group: { _id: null, total: { $sum: "$value" } } }
+            ]);
+            const gastoTotal = totalManut[0]?.total || 0;
+            await Car.findByIdAndUpdate(cost.car, { gastoManutencao: gastoTotal });
+        }
+
+        res.json({ mensagem: 'Custo excluído com sucesso.' });
+    } catch (err) {
+        console.error("Erro ao deletar custo:", err);
+        res.status(500).json({ mensagem: 'Erro ao excluir custo.', erro: err.message });
+    }
+};

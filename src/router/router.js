@@ -37,7 +37,7 @@ const { listarCarros, listarMeusCarros } = require("../controllers/carrosControl
 const { criarAluguel, listarAlugueis, listarAlugueisPorCarro, atualizarAluguel, updateKilometragem } = require("../controllers/rentController");
 
 // 🛑 ALTERAÇÃO: REMOVIDO expenseController e ADICIONADO costController
-const { createCost, listCosts, financeSummary } = require("../controllers/costController"); 
+const { createCost, listCosts, financeSummary, updateCost, deleteCost } = require("../controllers/costController"); 
 
 // 🛑 ALTERAÇÃO: Importadas as novas funções do maintenanceController
 const { 
@@ -110,6 +110,8 @@ router.put("/alugueis/:id/kilometragem", updateKilometragem);
 router.post("/costs", createCost);
 router.get("/costs", listCosts);
 router.get("/financeiro/resumo", financeSummary);
+router.put("/costs/:id", updateCost);
+router.delete("/costs/:id", deleteCost);
 
 // ---------- MANUTENÇÃO (Rotas Atualizadas) ----------
 // 🛑 ATUALIZADO: Rota para ENTRAR em Manutenção (apenas atualiza o status de entrada)
