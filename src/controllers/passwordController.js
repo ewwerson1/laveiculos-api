@@ -14,7 +14,7 @@ const mailer = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
 // ---------------------------------------------
 const sendCodeEmail = async (toEmail, code) => {
     try {
-        const sender = new Sender("no-reply@example.com", "Sua Empresa");
+        const sender = new Sender("ewwersondev@gmail.com", "Sua Empresa");
         const recipients = [ new Recipient(toEmail) ];
 
         const params = new EmailParams()
