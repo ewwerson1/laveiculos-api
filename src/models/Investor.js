@@ -16,20 +16,23 @@ const InvestorSchema = new mongoose.Schema({
     { type: mongoose.Schema.Types.ObjectId, ref: "Car" }
   ],
 
+  // -------------------------------------------
+  // CAMPOS DE RECUPERAÇÃO DE SENHA
+  // -------------------------------------------
+  resetPasswordCode: { type: String, default: null },
+  resetPasswordExpires: { type: Number, default: null },
+
 }, { timestamps: true });
 
 
 // Middleware para garantir hash SEMPRE
 InvestorSchema.pre("save", async function (next) {
-  // Se a senha não existe → aplica padrão
   if (!this.senha) {
     this.senha = "123456";
   }
 
-  // Se a senha não foi modificada, não rehache
   if (!this.isModified("senha")) return next();
 
-  // Criptografa
   this.senha = await bcrypt.hash(this.senha, 10);
   next();
 });
