@@ -2,41 +2,35 @@
 
 const Investor = require('../models/Investor');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 
 // ---------------------------------------------
-// Nodemailer (Gmail)
+// Configuração MailerSend
 // ---------------------------------------------
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS
-    }
-});
-
+const mailer = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
 
 // ---------------------------------------------
 // Função enviar código por e-mail
 // ---------------------------------------------
 const sendCodeEmail = async (toEmail, code) => {
     try {
-        await transporter.sendMail({
-            from: `"Sua Empresa" <${process.env.MAIL_USER}>`,
-            to: toEmail,
-            subject: "Seu Código de Recuperação de Senha",
-            html: `
+        const sender = new Sender("no-reply@example.com", "Sua Empresa");
+        const recipients = [ new Recipient(toEmail) ];
+
+        const params = new EmailParams()
+            .setFrom(sender)
+            .setTo(recipients)
+            .setSubject("Seu Código de Recuperação de Senha")
+            .setHtml(`
                 <p>Olá,</p>
                 <p>Você solicitou a recuperação de senha. Aqui está o seu código:</p>
                 <h1 style="background:#f0f0f0; padding:10px; text-align:center;">${code}</h1>
                 <p>Este código expira em 1 hora.</p>
                 <p>Se não foi você, apenas ignore este e-mail.</p>
-            `
-        });
+            `);
 
-        console.log("Email enviado via Gmail para:", toEmail);
+        await mailer.email.send(params);
+        console.log("Email enviado para:", toEmail);
 
     } catch (error) {
         console.error("Erro ao enviar e-mail:", error);
@@ -45,7 +39,7 @@ const sendCodeEmail = async (toEmail, code) => {
 };
 
 // ---------------------------------------------
-// Controller (Enviar código)
+// Controller: Enviar código de recuperação
 // ---------------------------------------------
 exports.sendResetCode = async (req, res) => {
     const { email } = req.body;
@@ -60,7 +54,7 @@ exports.sendResetCode = async (req, res) => {
         }
 
         const resetCode = crypto.randomBytes(3).toString("hex").toUpperCase();
-        const resetCodeExpiration = Date.now() + 3600000;
+        const resetCodeExpiration = Date.now() + 3600000; // 1 hora
 
         user.resetPasswordCode = resetCode;
         user.resetPasswordExpires = resetCodeExpiration;
@@ -80,6 +74,9 @@ exports.sendResetCode = async (req, res) => {
     }
 };
 
+// ---------------------------------------------
+// Controller: Validar código de recuperação
+// ---------------------------------------------
 exports.validateResetCode = async (req, res) => {
     const { email, code } = req.body;
 
@@ -101,6 +98,9 @@ exports.validateResetCode = async (req, res) => {
     }
 };
 
+// ---------------------------------------------
+// Controller: Resetar senha
+// ---------------------------------------------
 exports.resetPassword = async (req, res) => {
     const { email, newPassword } = req.body;
 
@@ -111,10 +111,10 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: "Usuário não encontrado." });
         }
 
-        // salva nova senha (middleware do model já faz hash)
+        // Salva nova senha (middleware do model já faz hash)
         user.senha = newPassword;
 
-        // limpa o código
+        // Limpa código e expiração
         user.resetPasswordCode = null;
         user.resetPasswordExpires = null;
 
