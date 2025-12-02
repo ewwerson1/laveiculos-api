@@ -18,16 +18,13 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuração CORS
 app.use(cors({
-  origin: '*',
-  methods: '*',
-  credentials: true
+  origin: '*', // seu domínio do frontend
+  methods: '*', // métodos permitidos
+  credentials: true // se quiser enviar cookies ou tokens de sessão
 }));
 
-// ✅ SERVIR A PASTA PUBLIC CORRETAMENTE (ESSENCIAL!)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ✅ SERVIR A PASTA UPLOADS (GARANTIDO!)
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+// Tornar a pasta public acessível (IMPORTANTE!)
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Rotas principais
 app.use('/api', router);
@@ -36,7 +33,7 @@ app.use('/api', router);
 const uploadProfile = require("./routes/uploadProfile");
 app.use("/api", uploadProfile);
 
-// Suas outras rotas de upload
+// Suas outras rotas de upload (não remover)
 app.use(uploadRoutes);
 
 require("./jobs/rentalScheduler");
