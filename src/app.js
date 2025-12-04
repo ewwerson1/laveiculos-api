@@ -33,8 +33,9 @@ app.use('/api', router);
 const uploadProfile = require("./routes/uploadProfile");
 app.use("/api", uploadProfile);
 
-// Suas outras rotas de upload (não remover)
-app.use(uploadRoutes);
+const uploadCarroCloudinary = require("./routes/uploadCarroCloudnary");
+app.use(uploadCarroCloudinary);
+
 
 require("./jobs/rentalScheduler");
 
