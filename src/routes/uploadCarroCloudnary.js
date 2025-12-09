@@ -2,44 +2,42 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const auth = require("../middleware/authMiddleware");
-const Investor = require("../models/Investor");
+const Carro = require("../models/Carro");
 const cloudinary = require("cloudinary").v2;
 
-// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// MULTER CONFIG
 const upload = multer({ dest: "tmp/" });
 
-// 🔥 Upload da FOTO DE PERFIL do investidor
-router.post("/upload/foto-perfil", auth, upload.single("foto"), async (req, res) => {
+// 🚘 Upload foto do carro
+router.post("/upload/carro/:carId/foto", auth, upload.single("foto"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Nenhuma imagem enviada" });
     }
 
-    // Envia para Cloudinary
     const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-      folder: "perfil",
+      folder: "la-veiculos-carros",
     });
 
-    // Atualiza o usuario
-    const investidor = await Investor.findById(req.user.id);
-    investidor.foto = uploadResult.secure_url;
-    await investidor.save();
+    const carro = await Carro.findById(req.params.carId);
+    if (!carro) return res.status(404).json({ error: "Carro não encontrado" });
 
-    return res.json({
-      message: "Foto atualizada!",
-      foto: uploadResult.secure_url,
+    carro.foto = uploadResult.secure_url;
+    await carro.save();
+
+    res.json({
+      message: "Foto enviada com sucesso!",
+      url: uploadResult.secure_url,
     });
 
   } catch (error) {
     console.error("Erro no upload:", error);
-    return res.status(500).json({ error: "Erro ao enviar imagem" });
+    res.status(500).json({ error: "Erro ao enviar imagem" });
   }
 });
 
