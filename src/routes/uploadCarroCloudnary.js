@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const auth = require("../middleware/authMiddleware");
-const Carro = require("../models/Carro");
+const Carro = require("../models/Car");
 const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
